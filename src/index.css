@@ -8,11 +8,5 @@ body {
 #root {
   width: 99%;
   height: 99%;
-  border: 4px solid red;
+  /* border: 4px solid red; */
 }
-/* 
-.maplibregl-canvas-container canvas,
-.maplibregl-canvas {
-  background-color: transparent !important;
-  mix-blend-mode: normal !important;
-} */
