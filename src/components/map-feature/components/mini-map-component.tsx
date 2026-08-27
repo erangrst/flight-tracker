@@ -1,16 +1,21 @@
 import { useEffect, useMemo } from 'react';
-import Map, { Layer, Source, useMap, } from '@vis.gl/react-maplibre';
+
+import Map, {
+    Layer,
+    Source,
+    useMap,
+} from '@vis.gl/react-maplibre';
+
 import type { Feature, Polygon } from 'geojson';
 
+import type {
+    FillLayerSpecification,
+    LineLayerSpecification,
+} from 'maplibre-gl';
+import { ViewportBounds } from './map-view-component';
+
+
 const MINI_MAP_ID = 'mini-map';
-
-export interface ViewportPolygon {
-    coordinates: [number, number][];
-}
-
-interface MiniMapProps {
-    viewport: ViewportPolygon;
-}
 
 const viewportFillLayer = {
     id: 'minimap-viewport-fill',
@@ -30,15 +35,18 @@ const viewportLineLayer = {
     },
 };
 
+interface MiniMapProps {
+    bounds: ViewportBounds;
+}
+
 export default function MiniMap({
-    viewport,
+    bounds,
 }: MiniMapProps) {
     const { [MINI_MAP_ID]: miniMap } = useMap();
 
-    /*
-     * Convert the four screen corners into a GeoJSON polygon.
-     */
-    const viewportFeature = useMemo<Feature<Polygon>>(
+    const viewportFeature = useMemo<
+        Feature<Polygon>
+    >(
         () => ({
             type: 'Feature',
             properties: {},
@@ -46,49 +54,35 @@ export default function MiniMap({
                 type: 'Polygon',
                 coordinates: [
                     [
-                        ...viewport.coordinates,
-                        viewport.coordinates[0],
+                        [bounds.west, bounds.south],
+                        [bounds.east, bounds.south],
+                        [bounds.east, bounds.north],
+                        [bounds.west, bounds.north],
+                        [bounds.west, bounds.south],
                     ],
                 ],
             },
         }),
-        [viewport],
+        [bounds],
     );
 
-    /*
-     * Move the minimap so that the current
-     * main-map viewport is visible.
-     */
     useEffect(() => {
-        if (!miniMap || viewport.coordinates.length === 0) {
+        if (!miniMap) {
             return;
         }
 
-        const lngs = viewport.coordinates.map(
-            ([lng]) => lng,
-        );
-
-        const lats = viewport.coordinates.map(
-            ([, lat]) => lat,
-        );
-
-        const west = Math.min(...lngs);
-        const east = Math.max(...lngs);
-        const south = Math.min(...lats);
-        const north = Math.max(...lats);
-
         miniMap.fitBounds(
             [
-                [west, south],
-                [east, north],
+                [bounds.west, bounds.south],
+                [bounds.east, bounds.north],
             ],
             {
                 padding: 30,
                 duration: 0,
-                maxZoom: 5,
+                maxZoom: 8,
             },
         );
-    }, [miniMap, viewport]);
+    }, [miniMap, bounds]);
 
     return (
         <div
@@ -102,14 +96,12 @@ export default function MiniMap({
                 border: '2px solid white',
                 borderRadius: 6,
                 overflow: 'hidden',
-                boxShadow:
-                    '0 2px 8px rgba(0, 0, 0, 0.4)',
-                background: '#fff',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.4)',
             }}
         >
             <Map
                 id={MINI_MAP_ID}
-                mapStyle="https://demotiles.maplibre.org/style.json"
+                mapStyle="https://tiles.openfreemap.org/styles/liberty"
                 initialViewState={{
                     longitude: 0,
                     latitude: 20,
