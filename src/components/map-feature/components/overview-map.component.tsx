@@ -67,9 +67,9 @@ export const OverviewMapComponent: React.FC<OverviewMapProps> = ({ bounds }: Ove
             style={{
                 position: 'absolute',
                 right: 10,
-                bottom: 10,
-                width: 300,
-                height: 200,
+                top: 10,
+                width: 225,
+                height: 150,
                 zIndex: 100,
                 border: '4px solid black',
                 borderRadius: 6,
