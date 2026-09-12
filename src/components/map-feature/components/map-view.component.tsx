@@ -5,13 +5,23 @@ import { middleOfUSA } from '../../../lib/constants';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ViewportBoundsModel } from '../models/viewport-bounds.model';
 import { libertyMapStyle } from '../map-styles/build-in-styles';
-import { OverviewMapComponent } from './overview-map.component';
 import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.component';
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
+import { Menu, MenuItem } from '@mui/material';
 
-export default function MapViewComponent() {
+interface ContextMenuState {
+    mouseX: number;
+    mouseY: number;
+    longitude: number;
+    latitude: number;
+    features?: maplibregl.MapGeoJSONFeature[];
+}
+
+export const MapViewComponent: React.FC = () => {
 
     const mapRef = useRef<MapRef>(null);
+
+    const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
     const [showOverviewMap, setShowOverviewMap] = useState(false);
     const [showCoordinates, setShowCoordinates] = useState(false);
@@ -19,6 +29,9 @@ export default function MapViewComponent() {
     const [viewportBounds, setViewportBounds] = useState<ViewportBoundsModel>({ west: -180, south: -85, east: 180, north: 85, });
 
     const [toolbarItems, setToolbarItems] = useState<PrimaryToolbarItem[]>([]);
+
+    const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState(false);
+
 
     useEffect(() => {
         const toolbarItems: PrimaryToolbarItem[] = buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates);
@@ -45,10 +58,28 @@ export default function MapViewComponent() {
         console.log('Clicked:', lng, lat);
     };
 
+    const handleOpenContextMenu = (event: MapLayerMouseEvent) => {
+        event.originalEvent.preventDefault();
+
+        setContextMenu({
+            mouseX: event.originalEvent.clientX,
+            mouseY: event.originalEvent.clientY,
+            longitude: event.lngLat.lng,
+            latitude: event.lngLat.lat,
+            features: event.features
+        });
+    };
+
+    function closeContextMenu() {
+        setContextMenu(null);
+    };
+
+
     return (
         <MapProvider>
 
             <div
+
                 style={{
                     border: '4px solid blue',
                     position: 'relative',
@@ -57,7 +88,6 @@ export default function MapViewComponent() {
                 }}
             >
                 <Map
-                    // mapLib={maplibregl}
                     ref={mapRef}
                     initialViewState={{
                         longitude: middleOfUSA[0],
@@ -65,8 +95,9 @@ export default function MapViewComponent() {
                         zoom: 2,
                         pitch: 0,
                         bearing: 0,
-                        // padding: { top: 130, bottom: 130, left: 130, right: 130 },
                     }}
+
+                    onContextMenu={handleOpenContextMenu}
 
                     pitchWithRotate={false}
                     dragRotate={false}
@@ -83,7 +114,7 @@ export default function MapViewComponent() {
 
                     attributionControl={false}
                 >
-                    <OverviewMapComponent bounds={viewportBounds} />
+                    {/* <OverviewMapComponent bounds={viewportBounds} /> */}
                     {/* <NavigationControl position="top-left" showCompass={true} visualizeRoll={false} showZoom={true} visualizePitch={false} /> */}
                     <ScaleControl position='bottom-left' unit='metric' maxWidth={200} />
                     <LogoControl position='bottom-left' />
@@ -93,6 +124,47 @@ export default function MapViewComponent() {
                     <MapToolbarComponent items={toolbarItems} />
 
                 </Map >
+
+
+                <Menu
+                    open={contextMenu !== null}
+                    onClose={closeContextMenu}
+                    anchorReference="anchorPosition"
+                    anchorPosition={
+                        contextMenu
+                            ? {
+                                top: contextMenu.mouseY,
+                                left: contextMenu.mouseX,
+                            }
+                            : undefined
+                    }
+                >
+                    <MenuItem
+                        onClick={() => {
+                            console.log(
+                                `Longitude: ${contextMenu?.longitude}`,
+                                `Latitude: ${contextMenu?.latitude}`
+                            );
+                            closeContextMenu();
+                        }}
+                    >
+                        Show coordinates
+                    </MenuItem>
+
+                    <MenuItem
+                        onClick={() => {
+                            console.log('Add marker');
+                            closeContextMenu();
+                        }}
+                    >
+                        Add marker
+                    </MenuItem>
+
+                    <MenuItem onClick={closeContextMenu}>
+                        Cancel
+                    </MenuItem>
+                </Menu>
+
 
             </div>
         </MapProvider >
