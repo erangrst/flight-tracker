@@ -1,4 +1,4 @@
-import { AttributionControl, LogoControl, Map, MapLayerMouseEvent, MapProvider, MapRef, NavigationControl, ScaleControl, useControl, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
+import { LogoControl, Map, MapLayerMouseEvent, MapProvider, MapRef, ScaleControl, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { middleOfUSA } from '../../../lib/constants';
@@ -8,6 +8,7 @@ import { libertyMapStyle } from '../map-styles/build-in-styles';
 import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.component';
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
 import { Menu, MenuItem } from '@mui/material';
+import { CoordinatesControl } from './controls/coordinates-control.component';
 
 interface ContextMenuState {
     mouseX: number;
@@ -24,7 +25,7 @@ export const MapViewComponent: React.FC = () => {
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
 
     const [showOverviewMap, setShowOverviewMap] = useState(false);
-    const [showCoordinates, setShowCoordinates] = useState(false);
+    const [showCoordinates, setShowCoordinates] = useState(true);
 
     const [viewportBounds, setViewportBounds] = useState<ViewportBoundsModel>({ west: -180, south: -85, east: 180, north: 85, });
 
@@ -115,14 +116,11 @@ export const MapViewComponent: React.FC = () => {
                     attributionControl={false}
                 >
                     {/* <OverviewMapComponent bounds={viewportBounds} /> */}
-                    {/* <NavigationControl position="top-left" showCompass={true} visualizeRoll={false} showZoom={true} visualizePitch={false} /> */}
                     <ScaleControl position='bottom-left' unit='metric' maxWidth={200} />
-                    <LogoControl position='bottom-left' />
-                    {/* <AttributionControl compact={true} customAttribution="Map design by me" position='bottom-left' /> */}
-
-                    {/* <MyNavigationControlComponent /> */}
+                    <LogoControl position='bottom-right' />
                     <MapToolbarComponent items={toolbarItems} />
 
+                    {showCoordinates && <CoordinatesControl position='bottom-right' />}
                 </Map >
 
 
