@@ -4,8 +4,8 @@ import { useRef } from "react";
 import { Root, createRoot } from "react-dom/client";
 
 interface CoordinatesControlProps {
-    position?: maplibregl.ControlPosition;
-    precision?: number;
+    position: maplibregl.ControlPosition;
+    precision: number;
 }
 
 interface CoordinatesDisplayProps {
@@ -14,7 +14,7 @@ interface CoordinatesDisplayProps {
     precision: number;
 }
 
-export const CoordinatesControl = ({ position = 'bottom-left', precision = 6, }: CoordinatesControlProps) => {
+export const CoordinatesControl: React.FC<CoordinatesControlProps> = ({ position, precision }) => {
     const rootRef = useRef<Root | null>(null);
 
     useControl(() => {
@@ -76,13 +76,7 @@ const CoordinatesDisplayComponent: React.FC<CoordinatesDisplayProps> = ({ longit
     return (
         <Paper
             elevation={3}
-            sx={{
-                border: '2px solid black',
-                px: 1.5,
-                py: 0.75,
-                width: '18rem',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-            }}
+            sx={{ border: '2px solid black', px: 1.5, py: 0.75, width: '18rem', backgroundColor: 'rgba(255, 255, 255, 0.9)', }}
         >
             <Box sx={{ display: 'flex', gap: 2 }}>
                 <Typography variant="caption" component="div" sx={{ whiteSpace: 'pre' }}>

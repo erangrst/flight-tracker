@@ -9,6 +9,7 @@ import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.c
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
 import { Menu, MenuItem } from '@mui/material';
 import { CoordinatesControl } from './controls/coordinates-control.component';
+import { precision } from '../models/definitions';
 
 interface ContextMenuState {
     mouseX: number;
@@ -78,9 +79,7 @@ export const MapViewComponent: React.FC = () => {
 
     return (
         <MapProvider>
-
             <div
-
                 style={{
                     border: '4px solid blue',
                     position: 'relative',
@@ -120,9 +119,8 @@ export const MapViewComponent: React.FC = () => {
                     <LogoControl position='bottom-right' />
                     <MapToolbarComponent items={toolbarItems} />
 
-                    {showCoordinates && <CoordinatesControl position='bottom-right' />}
+                    {showCoordinates && <CoordinatesControl position='bottom-right' precision={precision} />}
                 </Map >
-
 
                 <Menu
                     open={contextMenu !== null}
@@ -138,15 +136,22 @@ export const MapViewComponent: React.FC = () => {
                     }
                 >
                     <MenuItem
-                        onClick={() => {
-                            console.log(
-                                `Longitude: ${contextMenu?.longitude}`,
-                                `Latitude: ${contextMenu?.latitude}`
-                            );
-                            closeContextMenu();
+                        onClick={async () => {
+                            if (!contextMenu) { return; }
+
+                            const coordinates = `${contextMenu.longitude.toFixed(precision)} / ${contextMenu.latitude.toFixed(precision)}`;
+
+                            try {
+                                await navigator.clipboard.writeText(coordinates);
+                            } catch (error) {
+                                const errorMessage = error instanceof Error ? error.message : String(error);
+                                console.error('Failed to copy coordinates to clipboard:', { errorMessage });
+                            } finally {
+                                closeContextMenu();
+                            }
                         }}
                     >
-                        Show coordinates
+                        Copy coordinates
                     </MenuItem>
 
                     <MenuItem
