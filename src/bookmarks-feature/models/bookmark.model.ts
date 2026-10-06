@@ -1,4 +1,4 @@
-import { LocationModel } from '../../components/map-feature/models/location.model';
+import { LocationModel } from '../../map-feature/models/location.model';
 
 export interface BookmarkModel {
   id?: string;

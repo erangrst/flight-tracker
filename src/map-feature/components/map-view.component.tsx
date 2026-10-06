@@ -1,13 +1,13 @@
 import { LogoControl, Map, MapLayerMouseEvent, MapProvider, MapRef, ScaleControl, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { middleOfUSA } from '../../../lib/constants';
+import { middleOfUSA } from '../../lib/constants';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ViewportBoundsModel } from '../models/viewport-bounds.model';
 import { libertyMapStyle } from '../map-styles/build-in-styles';
 import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.component';
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
-import { Menu, MenuItem } from '@mui/material';
+import { Divider, Menu, MenuItem } from '@mui/material';
 import { CoordinatesControl } from './controls/coordinates-control.component';
 import { precision } from '../models/definitions';
 
@@ -76,6 +76,20 @@ export const MapViewComponent: React.FC = () => {
         setContextMenu(null);
     };
 
+    async function copyCoordinatesToClipboard() {
+        if (!contextMenu) { return; }
+
+        const coordinates = `${contextMenu.longitude.toFixed(precision)} / ${contextMenu.latitude.toFixed(precision)}`;
+
+        try {
+            await navigator.clipboard.writeText(coordinates);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error('Failed to copy coordinates to clipboard:', { errorMessage });
+        } finally {
+            closeContextMenu();
+        }
+    }
 
     return (
         <MapProvider>
@@ -101,7 +115,6 @@ export const MapViewComponent: React.FC = () => {
 
                     pitchWithRotate={false}
                     dragRotate={false}
-
 
                     // Zoom by mouse wheel
                     scrollZoom={true}
@@ -135,36 +148,21 @@ export const MapViewComponent: React.FC = () => {
                             : undefined
                     }
                 >
-                    <MenuItem
-                        onClick={async () => {
-                            if (!contextMenu) { return; }
-
-                            const coordinates = `${contextMenu.longitude.toFixed(precision)} / ${contextMenu.latitude.toFixed(precision)}`;
-
-                            try {
-                                await navigator.clipboard.writeText(coordinates);
-                            } catch (error) {
-                                const errorMessage = error instanceof Error ? error.message : String(error);
-                                console.error('Failed to copy coordinates to clipboard:', { errorMessage });
-                            } finally {
-                                closeContextMenu();
-                            }
-                        }}
-                    >
-                        Copy coordinates
-                    </MenuItem>
+                    <MenuItem onClick={copyCoordinatesToClipboard}>Copy coordinates</MenuItem>
 
                     <MenuItem
                         onClick={() => {
-                            console.log('Add marker');
+                            console.log('Add Bookmark');
                             closeContextMenu();
                         }}
                     >
-                        Add marker
+                        Add Bookmark
                     </MenuItem>
 
+                    <Divider sx={{ height: '2px', mx: '4px', border: 0, bgcolor: 'primary.main' }} />
+
                     <MenuItem onClick={closeContextMenu}>
-                        Cancel
+                        Close
                     </MenuItem>
                 </Menu>
 
