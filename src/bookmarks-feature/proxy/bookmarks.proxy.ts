@@ -16,7 +16,8 @@ export async function getBookmarksApi(): Promise<CommonResponseModel<BookmarkMod
 
 export async function upsertBookmarksApi(bookmark: BookmarkModel): Promise<CommonResponseModel<BookmarkModel>> {
   try {
-    const response: AxiosResponse<CommonResponseModel<BookmarkModel>> = await proxyClient.post('/Bookmarks/upsertBookmark', { data: bookmark });
+    console.log('proxyClient', { proxyClient });
+    const response: AxiosResponse<CommonResponseModel<BookmarkModel>> = await proxyClient.post('/Bookmarks/upsertBookmark', bookmark);
 
     return response.data;
   } catch (error) {

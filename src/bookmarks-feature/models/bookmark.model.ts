@@ -1,4 +1,4 @@
-import { LocationModel } from '../../map-feature/models/location.model';
+import { EmptyLocation, LocationModel } from '../../map-feature/models/location.model';
 
 export interface BookmarkModel {
   id?: string;
@@ -6,3 +6,10 @@ export interface BookmarkModel {
   name: string;
   location: LocationModel;
 }
+
+export const EmptyBookmark: BookmarkModel = {
+  id: '',
+  kind: '',
+  name: '',
+  location: { ...EmptyLocation },
+};

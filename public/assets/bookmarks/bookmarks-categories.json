@@ -1,0 +1,22 @@
+[
+  {
+    "value": "home",
+    "label": "Home",
+    "icon": "/assets/icons/home/icons8-home-48.png"
+  },
+  {
+    "value": "location",
+    "label": "Location",
+    "icon": "/assets/icons/location/icons8-location-48.png"
+  },
+  {
+    "value": "city",
+    "label": "City",
+    "icon": "/assets/icons/city/icons8-city-block-48.png"
+  },
+  {
+    "value": "landmark",
+    "label": "Landmark",
+    "icon": "/assets/icons/landmark/icons8-landmark-48.png"
+  }
+]

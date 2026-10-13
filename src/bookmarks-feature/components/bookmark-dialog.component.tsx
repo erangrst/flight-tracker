@@ -1,8 +1,24 @@
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, FormHelperText, InputLabel, MenuItem, Select, Stack, TextField, } from '@mui/material';
-import { FC } from 'react';
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControl,
+    FormHelperText,
+    InputLabel,
+    MenuItem,
+    Select,
+    Stack,
+    TextField,
+} from '@mui/material';
+import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
 import { BookmarkModel } from '../models/bookmark.model';
+import { useSelector } from 'react-redux';
+import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../store/bookmarks.selectors';
+import { BookmarkCategoryModel } from '../models/bookmark-category.model';
 
 interface BookmarkDialogProps {
     open: boolean;
@@ -31,37 +47,41 @@ const DEFAULT_VALUES: BookmarkFormData = {
     },
 };
 
-const KIND_OPTIONS = [
-    { value: 'location', label: 'Location' },
-    { value: 'target', label: 'Target' },
-    { value: 'favorite', label: 'Favorite' },
-];
+export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, }) => {
 
-function bookmarkToBookMarkFormData(bookmark: BookmarkModel): BookmarkFormData {
-    const formData: BookmarkFormData = bookmark
-        ? {
-            name: bookmark.name,
-            kind: bookmark.kind,
-            location: {
-                latitude: bookmark.location.latitude,
-                longitude: bookmark.location.longitude,
-                altitude: bookmark.location.altitude,
-            },
-        }
-        : DEFAULT_VALUES;
+    const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
 
-    return formData;
-}
+    useEffect(() => {
+        console.log('%bookmarksCategories updated', 'background: yellow; color: black;', { bookmarksCategories });
+    }, [bookmarksCategories]);
 
-export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, }) => {
-    const { control, handleSubmit, reset, formState: { errors } } = useForm<BookmarkFormData>({
-        defaultValues: bookmarkToBookMarkFormData(bookmark)
+    const { control, handleSubmit, reset, formState: { errors }, } = useForm<BookmarkFormData>({
+        defaultValues: DEFAULT_VALUES,
     });
 
-    const handleDialogClose = () => {
-        reset(bookmarkToBookMarkFormData(bookmark));
-        onClose();
-    };
+    /*
+     * Initialize the form when the dialog is opened or when the bookmark being
+     * edited changes.
+     */
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        if (bookmark) {
+            reset({
+                name: bookmark.name,
+                kind: bookmark.kind,
+                location: {
+                    latitude: bookmark.location.latitude,
+                    longitude: bookmark.location.longitude,
+                    altitude: bookmark.location.altitude,
+                },
+            });
+        } else {
+            reset(DEFAULT_VALUES);
+        }
+    }, [open, bookmark, reset]);
 
     const onSubmit = (data: BookmarkFormData) => {
         const result: BookmarkModel = {
@@ -75,6 +95,7 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
             },
         };
 
+        // alert('OnSave dlg');
         onSave(result);
         onClose();
     };
@@ -82,11 +103,13 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
     return (
         <Dialog
             open={open}
-            onClose={handleDialogClose}
+            onClose={onClose}
             fullWidth
             maxWidth="sm"
         >
-            <DialogTitle>{bookmark ? 'Edit Bookmark' : 'Add Bookmark'}</DialogTitle>
+            <DialogTitle>
+                {bookmark ? 'Edit Bookmark' : 'Add Bookmark'}
+            </DialogTitle>
 
             <DialogContent>
                 <Stack
@@ -96,7 +119,6 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                     spacing={2}
                     sx={{ mt: 1 }}
                 >
-                    {/* Name */}
                     <Controller
                         name="name"
                         control={control}
@@ -115,25 +137,34 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                         )}
                     />
 
-                    {/* Kind */}
                     <Controller
                         name="kind"
                         control={control}
-                        rules={{ required: 'Kind is required' }}
+                        rules={{
+                            required: 'Kind is required',
+                        }}
                         render={({ field }) => (
                             <FormControl
                                 fullWidth
                                 required
                                 error={!!errors.kind}
                             >
-                                <InputLabel id="bookmark-kind-label">Kind</InputLabel>
+                                <InputLabel id="bookmark-kind-label">
+                                    Kind
+                                </InputLabel>
+
                                 <Select
                                     {...field}
                                     labelId="bookmark-kind-label"
                                     label="Kind"
                                 >
-                                    {KIND_OPTIONS.map((option) => (
-                                        <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>
+                                    {bookmarksCategories.map((option) => (
+                                        <MenuItem
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </MenuItem>
                                     ))}
                                 </Select>
 
@@ -146,21 +177,26 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                         )}
                     />
 
-                    {/* Location */}
                     <Stack direction="row" spacing={2}>
-                        {/* Latitude */}
                         <Controller
                             name="location.latitude"
                             control={control}
                             rules={{
                                 required: 'Latitude is required',
                                 validate: (value) => {
-                                    if (value === '') { return 'Latitude is required'; }
+                                    if (value === '') {
+                                        return 'Latitude is required';
+                                    }
 
                                     const latitude = Number(value);
 
-                                    if (!Number.isFinite(latitude)) { return 'Latitude must be a number'; }
-                                    if (latitude < -90 || latitude > 90) { return 'Latitude must be between -90 and 90'; }
+                                    if (!Number.isFinite(latitude)) {
+                                        return 'Latitude must be a number';
+                                    }
+
+                                    if (latitude < -90 || latitude > 90) {
+                                        return 'Latitude must be between -90 and 90';
+                                    }
 
                                     return true;
                                 },
@@ -171,7 +207,9 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                                     value={field.value}
                                     onChange={(event) => {
                                         const value = event.target.value;
-                                        field.onChange(value === '' ? '' : Number(value),);
+                                        field.onChange(
+                                            value === '' ? '' : Number(value),
+                                        );
                                     }}
                                     label="Latitude"
                                     type="number"
@@ -179,23 +217,34 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                                     required
                                     error={!!errors.location?.latitude}
                                     helperText={errors.location?.latitude?.message}
-                                    slotProps={{ htmlInput: { step: 'any', }, }}
+                                    slotProps={{
+                                        htmlInput: {
+                                            step: 'any',
+                                        },
+                                    }}
                                 />
                             )}
                         />
 
-                        {/* Longitude */}
                         <Controller
                             name="location.longitude"
                             control={control}
                             rules={{
                                 required: 'Longitude is required',
                                 validate: (value) => {
-                                    if (value === '') { return 'Longitude is required'; }
+                                    if (value === '') {
+                                        return 'Longitude is required';
+                                    }
 
                                     const longitude = Number(value);
-                                    if (!Number.isFinite(longitude)) { return 'Longitude must be a number'; }
-                                    if (longitude < -180 || longitude > 180) { return 'Longitude must be between -180 and 180'; }
+
+                                    if (!Number.isFinite(longitude)) {
+                                        return 'Longitude must be a number';
+                                    }
+
+                                    if (longitude < -180 || longitude > 180) {
+                                        return 'Longitude must be between -180 and 180';
+                                    }
 
                                     return true;
                                 },
@@ -206,19 +255,25 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                                     value={field.value}
                                     onChange={(event) => {
                                         const value = event.target.value;
-                                        field.onChange(value === '' ? '' : Number(value),);
+                                        field.onChange(
+                                            value === '' ? '' : Number(value),
+                                        );
                                     }}
                                     label="Longitude"
                                     type="number"
                                     fullWidth
                                     required
-                                    slotProps={{ htmlInput: { step: 'any', }, }} error={!!errors.location?.longitude}
+                                    error={!!errors.location?.longitude}
                                     helperText={errors.location?.longitude?.message}
+                                    slotProps={{
+                                        htmlInput: {
+                                            step: 'any',
+                                        },
+                                    }}
                                 />
                             )}
                         />
 
-                        {/* Altitude */}
                         <Controller
                             name="location.altitude"
                             control={control}
@@ -228,12 +283,18 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                                     value={field.value}
                                     onChange={(event) => {
                                         const value = event.target.value;
-                                        field.onChange(value === '' ? '' : Number(value),);
+                                        field.onChange(
+                                            value === '' ? '' : Number(value),
+                                        );
                                     }}
                                     label="Altitude"
                                     type="number"
                                     fullWidth
-                                    slotProps={{ htmlInput: { step: 'any', }, }}
+                                    slotProps={{
+                                        htmlInput: {
+                                            step: 'any',
+                                        },
+                                    }}
                                 />
                             )}
                         />
@@ -242,7 +303,7 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={handleDialogClose}>
+                <Button onClick={onClose}>
                     Cancel
                 </Button>
 
@@ -251,7 +312,7 @@ export const BookmarkDialogComponent: FC<BookmarkDialogProps> = ({ open, bookmar
                     form="bookmark-form"
                     variant="contained"
                 >
-                    Ok
+                    Save
                 </Button>
             </DialogActions>
         </Dialog>

@@ -1,4 +1,4 @@
-import { LogoControl, Map, MapLayerMouseEvent, MapProvider, MapRef, ScaleControl, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
+import { Layer, LogoControl, Map, MapLayerMouseEvent, MapProvider, MapRef, ScaleControl, Source, ViewStateChangeEvent } from '@vis.gl/react-maplibre';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { middleOfUSA } from '../../lib/constants';
@@ -10,6 +10,14 @@ import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
 import { Divider, Menu, MenuItem } from '@mui/material';
 import { CoordinatesControl } from './controls/coordinates-control.component';
 import { precision } from '../models/definitions';
+import { BookmarkDialog } from '../../bookmarks-feature/components/bookmark-dialog.component';
+import { BookmarkModel, EmptyBookmark } from '../../bookmarks-feature/models/bookmark.model';
+import { deleteBookmark, saveBookmark } from '../../bookmarks-feature/logic/bookmarks.logic';
+import { poiLayerStyle } from '../layers-configuration';
+import { useSelector } from 'react-redux';
+import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../../bookmarks-feature/store/bookmarks.selectors';
+import { BookmarkCategoryModel, EmptyBookmarkCategory } from '../../bookmarks-feature/models/bookmark-category.model';
+import { EmptyLocation } from '../models/location.model';
 
 interface ContextMenuState {
     mouseX: number;
@@ -17,9 +25,13 @@ interface ContextMenuState {
     longitude: number;
     latitude: number;
     features?: maplibregl.MapGeoJSONFeature[];
+    selectedBookmark?: BookmarkModel | null;
 }
 
 export const MapViewComponent: React.FC = () => {
+
+    const bookmarks: BookmarkModel[] = useSelector(bookmarksSelector);
+    const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
 
     const mapRef = useRef<MapRef>(null);
 
@@ -27,19 +39,42 @@ export const MapViewComponent: React.FC = () => {
 
     const [showOverviewMap, setShowOverviewMap] = useState(false);
     const [showCoordinates, setShowCoordinates] = useState(true);
+    const [mapLoaded, setMapLoaded] = useState(false);
 
     const [viewportBounds, setViewportBounds] = useState<ViewportBoundsModel>({ west: -180, south: -85, east: 180, north: 85, });
 
     const [toolbarItems, setToolbarItems] = useState<PrimaryToolbarItem[]>([]);
 
     const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState(false);
+    const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkModel>();
 
+    const [isPoiVisible, setIsPoiVisible] = useState(true);
 
     useEffect(() => {
         const toolbarItems: PrimaryToolbarItem[] = buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates);
         setToolbarItems(toolbarItems);
         console.log('Toolbar items built:', { toolbarItems });
     }, [mapRef]);
+
+
+    async function addBookmarkCategoryImage(map: maplibregl.Map, bookmarkCategory: BookmarkCategoryModel) {
+        try {
+            const image = await map.loadImage(bookmarkCategory.icon);
+
+            if (image && !map.hasImage(bookmarkCategory.value)) {
+                map.addImage(bookmarkCategory.value, image.data);
+            }
+        } catch (error) {
+            console.error('Failed to load map icon:', { bookmarkCategory, error });
+        }
+    }
+
+    useEffect(() => {
+        const map = mapRef.current?.getMap();
+        if (!mapLoaded || !map) { return; }
+
+        bookmarksCategories.forEach((category) => { addBookmarkCategoryImage(map, category); });
+    }, [bookmarksCategories, mapLoaded]);
 
     const handleMove = useCallback(
         (event: ViewStateChangeEvent) => {
@@ -55,26 +90,133 @@ export const MapViewComponent: React.FC = () => {
         [],
     );
 
+    //#region Map Event Handlers
+
     const handleMapClick = (event: MapLayerMouseEvent) => {
         const { lng, lat } = event.lngLat;
         console.log('Clicked:', lng, lat);
     };
 
+    //#endregion
+
+    //#region Context Menu Handlers
+
     const handleOpenContextMenu = (event: MapLayerMouseEvent) => {
         event.originalEvent.preventDefault();
+
+        // Check if a symbol from the poi-layer was clicked
+        let symbolFeature = event.features?.find((f) => f.layer.id === 'poi-layer');
+
+        if (!symbolFeature && mapRef.current) {
+            const bbox: [maplibregl.PointLike, maplibregl.PointLike] = [
+                [event.point.x - 5, event.point.y - 5],
+                [event.point.x + 5, event.point.y + 5],
+            ];
+            const queried = mapRef.current.queryRenderedFeatures(bbox, { layers: ['poi-layer'] });
+            if (queried.length > 0) {
+                symbolFeature = queried[0];
+            }
+        }
+
+        let selectedBookmark: BookmarkModel | null = null;
+        if (symbolFeature) {
+            const bookmarkIndex = symbolFeature.properties?.bookmarkIndex;
+            if (typeof bookmarkIndex === 'number' && bookmarks[bookmarkIndex]) {
+                selectedBookmark = bookmarks[bookmarkIndex];
+            } else {
+                const propId = symbolFeature.properties?.id;
+                const propTitle = symbolFeature.properties?.title;
+                selectedBookmark = bookmarks.find((b) => (propId && b.id === propId) || (propTitle && b.name === propTitle)) ?? null;
+            }
+        }
 
         setContextMenu({
             mouseX: event.originalEvent.clientX,
             mouseY: event.originalEvent.clientY,
             longitude: event.lngLat.lng,
             latitude: event.lngLat.lat,
-            features: event.features
+            features: event.features,
+            selectedBookmark,
         });
     };
 
     function closeContextMenu() {
         setContextMenu(null);
     };
+
+    //#endregion
+
+    //#region Bookmarks CRUD Menu Handlers
+
+    function handleAddBookmark(event?: React.MouseEvent) {
+        event?.stopPropagation();
+
+        const bookmarkDraft: BookmarkModel = {
+            ...EmptyBookmark,
+            location: {
+                ...EmptyLocation,
+                latitude: Number(contextMenu.latitude.toFixed(precision)),
+                longitude: Number(contextMenu.longitude.toFixed(precision))
+            }
+        };
+
+        closeContextMenu();
+        openBookmarkDialog(bookmarkDraft);
+    };
+
+    function handleUpdateBookmark(event?: React.MouseEvent) {
+        event?.stopPropagation();
+
+        const bookmarkDraft = contextMenu && contextMenu.selectedBookmark || null;
+
+        if (!bookmarkDraft) {
+            console.error('No bookmark selected for update.');
+            return;
+        }
+
+        closeContextMenu();
+        openBookmarkDialog(bookmarkDraft);
+    };
+
+    function handleDeleteBookmark(event?: React.MouseEvent) {
+        event?.stopPropagation();
+
+        const bookmarkDraft = contextMenu && contextMenu.selectedBookmark || null;
+
+        if (!bookmarkDraft) {
+            console.error('No bookmark selected for delete.');
+            return;
+        }
+
+        closeContextMenu();
+        deleteBookmark(bookmarkDraft);
+    };
+
+    //#endregion    
+
+    function openBookmarkDialog(draftBookmark: BookmarkModel) {
+
+        let tmpDraftBookmark: BookmarkModel;
+
+        if (draftBookmark) {
+            tmpDraftBookmark = { ...draftBookmark };
+        }
+        else {
+            tmpDraftBookmark = {
+                ...EmptyBookmark,
+                location: {
+                    ...EmptyLocation,
+                    latitude: Number(contextMenu.latitude.toFixed(precision)),
+                    longitude: Number(contextMenu.longitude.toFixed(precision))
+                }
+            };
+        }
+
+        setBookmarkDraft(tmpDraftBookmark);
+        setBookmarkDialogOpen(true);
+    }
+
+    //#region Copy Coordinates Menu Handler
 
     async function copyCoordinatesToClipboard() {
         if (!contextMenu) { return; }
@@ -91,6 +233,36 @@ export const MapViewComponent: React.FC = () => {
         }
     }
 
+    //#endregion
+
+    const geojsonData: GeoJSON.FeatureCollection = {
+        type: 'FeatureCollection',
+        features: bookmarks.map((bookmark, index) => ({
+            type: 'Feature',
+            id: bookmark.id || index,
+            geometry: {
+                type: 'Point',
+                coordinates: [bookmark.location.longitude, bookmark.location.latitude],
+            },
+            properties: {
+                id: bookmark.id,
+                bookmarkIndex: index,
+                title: bookmark.name,
+                icon: bookmark.kind,
+            },
+        })),
+    };
+
+    //#endregion
+
+    //#region Init Bookmarks Categories
+
+    function handleMapLoad() {
+        setMapLoaded(true);
+    }
+
+    //#endregion
+
     return (
         <MapProvider>
             <div
@@ -103,6 +275,7 @@ export const MapViewComponent: React.FC = () => {
             >
                 <Map
                     ref={mapRef}
+                    onLoad={handleMapLoad}
                     initialViewState={{
                         longitude: middleOfUSA[0],
                         latitude: middleOfUSA[1],
@@ -112,6 +285,7 @@ export const MapViewComponent: React.FC = () => {
                     }}
 
                     onContextMenu={handleOpenContextMenu}
+                    interactiveLayerIds={isPoiVisible ? ['poi-layer'] : []}
 
                     pitchWithRotate={false}
                     dragRotate={false}
@@ -133,6 +307,10 @@ export const MapViewComponent: React.FC = () => {
                     <MapToolbarComponent items={toolbarItems} />
 
                     {showCoordinates && <CoordinatesControl position='bottom-right' precision={precision} />}
+
+                    <Source id="poi-source" type="geojson" data={geojsonData}>
+                        <Layer {...(poiLayerStyle(isPoiVisible))} />
+                    </Source>
                 </Map >
 
                 <Menu
@@ -150,23 +328,34 @@ export const MapViewComponent: React.FC = () => {
                 >
                     <MenuItem onClick={copyCoordinatesToClipboard}>Copy coordinates</MenuItem>
 
-                    <MenuItem
-                        onClick={() => {
-                            console.log('Add Bookmark');
-                            closeContextMenu();
-                        }}
-                    >
+                    <MenuItem onClick={(event) => {
+                        handleAddBookmark(event);
+                    }} >
                         Add Bookmark
                     </MenuItem>
 
+                    {contextMenu?.selectedBookmark && (
+                        <>
+                            <Divider sx={{ height: '1px', mx: '4px' }} />
+                            <MenuItem onClick={handleUpdateBookmark}>Update Bookmark</MenuItem>
+                            <MenuItem onClick={handleDeleteBookmark}>Delete Bookmark</MenuItem>
+                        </>
+                    )}
+
                     <Divider sx={{ height: '2px', mx: '4px', border: 0, bgcolor: 'primary.main' }} />
 
-                    <MenuItem onClick={closeContextMenu}>
-                        Close
-                    </MenuItem>
+                    <MenuItem onClick={closeContextMenu}>Close</MenuItem>
                 </Menu>
 
-
+                <BookmarkDialog
+                    open={bookmarkDialogOpen}
+                    bookmark={bookmarkDraft}
+                    onClose={() => setBookmarkDialogOpen(false)}
+                    onSave={(bookmark) => {
+                        console.log('OnSave Saving bookmark:1', { bookmark });
+                        saveBookmark(bookmark);
+                    }}
+                />
             </div>
         </MapProvider >
     );

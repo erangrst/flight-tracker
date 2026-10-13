@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { initialBookmarksState } from './bookmarks.state';
+import { BookmarkCategoryModel } from '../models/bookmark-category.model';
 import { BookmarkModel } from '../models/bookmark.model';
 
 export const bookmarksSlice = createSlice({
@@ -35,6 +36,10 @@ export const bookmarksSlice = createSlice({
       const { loading } = action.payload;
       state.loading = loading;
     },
+    setBookmarkCategoriesReducer: (state, action: PayloadAction<{ bookmarkCategories: BookmarkCategoryModel[] }>) => {
+      const { bookmarkCategories } = action.payload;
+      state.bookmarkCategories = bookmarkCategories;
+    },
   },
 });
 
@@ -44,6 +49,7 @@ export const {
   removeBookmarkReducer: removeBookmarkAction,
   setSelectedBookmarkReducer: setSelectedBookmarkAction,
   setLoadingReducer: setLoadingAction,
+  setBookmarkCategoriesReducer: setBookmarkCategoriesAction,
 } = bookmarksSlice.actions;
 
 export default bookmarksSlice.reducer;
