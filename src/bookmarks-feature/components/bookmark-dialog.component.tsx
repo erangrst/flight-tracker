@@ -219,8 +219,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                             </FormControl>
                         )}
                     />
-
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
+                    <Stack direction="row" sx={{ alignItems: 'center' }}>
                         <Controller
                             name="location.latitude"
                             control={control}
@@ -258,6 +257,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                     type="number"
                                     fullWidth
                                     required
+                                    sx={{ marginRight: '1rem' }}
                                     error={!!errors.location?.latitude}
                                     helperText={errors.location?.latitude?.message}
                                     slotProps={{
@@ -306,6 +306,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                     type="number"
                                     fullWidth
                                     required
+                                    sx={{ marginRight: '1rem' }}
                                     error={!!errors.location?.longitude}
                                     helperText={errors.location?.longitude?.message}
                                     slotProps={{
@@ -322,7 +323,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                 color="primary"
                                 onClick={handlePickLocationClick}
                                 aria-label="Pin coordinate on map"
-                                sx={{ mt: 1 }}
+                                sx={{ marginRight: '3rem', padding: 0 }}
                             >
                                 <LocationOnIcon />
                             </IconButton>
