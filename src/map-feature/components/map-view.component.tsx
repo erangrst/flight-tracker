@@ -52,6 +52,10 @@ export const MapViewComponent: React.FC = () => {
         latitude: number;
         longitude: number;
     } | null>(null);
+    const [bookmarkDetailsPreview, setBookmarkDetailsPreview] = useState<{
+        name: string;
+        kind: string;
+    } | null>(null);
     const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
 
     const [isPoiVisible, setIsPoiVisible] = useState(true);
@@ -281,6 +285,7 @@ export const MapViewComponent: React.FC = () => {
 
         setBookmarkDraft(tmpDraftBookmark);
         setBookmarkCoordinatePreview(null);
+        setBookmarkDetailsPreview(null);
         setBookmarkDialogOpen(true);
     }
 
@@ -304,15 +309,16 @@ export const MapViewComponent: React.FC = () => {
     //#endregion
 
     const displayBookmarks: BookmarkModel[] = [...bookmarks];
-    const bookmarkToDisplay = bookmarkDraft && bookmarkCoordinatePreview
+    const bookmarkToDisplay = bookmarkDraft
         ? {
             ...bookmarkDraft,
+            ...(bookmarkDetailsPreview || {}),
             location: {
                 ...bookmarkDraft.location,
-                ...bookmarkCoordinatePreview,
+                ...(bookmarkCoordinatePreview || {}),
             },
         }
-        : bookmarkDraft;
+        : undefined;
 
     if (bookmarkToDisplay &&
         typeof bookmarkToDisplay.location?.longitude === 'number' &&
@@ -488,6 +494,7 @@ export const MapViewComponent: React.FC = () => {
                         setBookmarkDialogOpen(false);
                         setBookmarkDraft(undefined);
                         setBookmarkCoordinatePreview(null);
+                        setBookmarkDetailsPreview(null);
                     }}
                     onCoordinateChange={(coordinates) => {
                         const { latitude, longitude } = coordinates;
@@ -498,9 +505,13 @@ export const MapViewComponent: React.FC = () => {
                             setBookmarkCoordinatePreview(null);
                         }
                     }}
+                    onDetailsChange={(details) => {
+                        setBookmarkDetailsPreview(details);
+                    }}
                     onPickLocation={(draft) => {
                         setBookmarkDraft(draft);
                         setBookmarkCoordinatePreview(null);
+                        setBookmarkDetailsPreview(null);
                         setBookmarkDialogOpen(false);
                         setIsPickingLocation(true);
                     }}
@@ -510,6 +521,7 @@ export const MapViewComponent: React.FC = () => {
                         setBookmarkDialogOpen(false);
                         setBookmarkDraft(undefined);
                         setBookmarkCoordinatePreview(null);
+                        setBookmarkDetailsPreview(null);
                     }}
                 />
             </div>

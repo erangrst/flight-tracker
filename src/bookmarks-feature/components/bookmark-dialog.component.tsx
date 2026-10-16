@@ -33,6 +33,7 @@ interface BookmarkDialogProps {
         latitude: number | '';
         longitude: number | '';
     }) => void;
+    onDetailsChange: (details: { name: string; kind: string }) => void;
 }
 
 interface BookmarkFormData {
@@ -55,7 +56,7 @@ const DEFAULT_VALUES: BookmarkFormData = {
     },
 };
 
-export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, onPickLocation, onCoordinateChange }) => {
+export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, onPickLocation, onCoordinateChange, onDetailsChange }) => {
 
     const bookmarks: BookmarkModel[] = useSelector(bookmarksSelector);
     const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
@@ -168,6 +169,13 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                         render={({ field }) => (
                             <TextField
                                 {...field}
+                                onChange={(event) => {
+                                    field.onChange(event);
+                                    onDetailsChange({
+                                        name: event.target.value,
+                                        kind: getValues('kind'),
+                                    });
+                                }}
                                 label="Name"
                                 fullWidth
                                 required
@@ -209,6 +217,10 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                     onChange={(event) => {
                                         field.onChange(event);
                                         trigger('kind');
+                                        onDetailsChange({
+                                            name: getValues('name'),
+                                            kind: event.target.value,
+                                        });
                                     }}
                                     labelId="bookmark-kind-label"
                                     label="Kind"
