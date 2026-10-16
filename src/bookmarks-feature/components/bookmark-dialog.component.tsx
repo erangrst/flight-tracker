@@ -49,13 +49,14 @@ const DEFAULT_VALUES: BookmarkFormData = {
 
 export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, }) => {
 
+    const bookmarks: BookmarkModel[] = useSelector(bookmarksSelector);
     const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
 
     useEffect(() => {
         console.log('%bookmarksCategories updated', 'background: yellow; color: black;', { bookmarksCategories });
     }, [bookmarksCategories]);
 
-    const { control, handleSubmit, reset, formState: { errors }, } = useForm<BookmarkFormData>({
+    const { control, handleSubmit, reset, trigger, formState: { errors }, } = useForm<BookmarkFormData>({
         defaultValues: DEFAULT_VALUES,
     });
 
@@ -84,6 +85,14 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
     }, [open, bookmark, reset]);
 
     const onSubmit = (data: BookmarkFormData) => {
+        if (data.kind?.toLowerCase() === 'home') {
+            const homeExists = (bookmarks || []).some(
+                (b) => b.kind?.toLowerCase() === 'home' && (!bookmark?.id || b.id !== bookmark.id)
+            );
+
+            if (homeExists) { return; }
+        }
+
         const result: BookmarkModel = {
             id: bookmark?.id,
             name: data.name,
@@ -142,6 +151,17 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                         control={control}
                         rules={{
                             required: 'Kind is required',
+                            validate: (value) => {
+                                if (value?.toLowerCase() === 'home') {
+                                    const homeExists = (bookmarks || []).some(
+                                        (b) => b.kind?.toLowerCase() === 'home' && (!bookmark?.id || b.id !== bookmark.id)
+                                    );
+                                    if (homeExists) {
+                                        return 'Only one Home bookmark can exist';
+                                    }
+                                }
+                                return true;
+                            },
                         }}
                         render={({ field }) => (
                             <FormControl
@@ -155,6 +175,10 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
 
                                 <Select
                                     {...field}
+                                    onChange={(event) => {
+                                        field.onChange(event);
+                                        trigger('kind');
+                                    }}
                                     labelId="bookmark-kind-label"
                                     label="Kind"
                                 >
