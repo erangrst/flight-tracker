@@ -7,7 +7,8 @@ import { ViewportBoundsModel } from '../models/viewport-bounds.model';
 import { libertyMapStyle } from '../map-styles/build-in-styles';
 import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.component';
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
-import { Divider, Menu, MenuItem } from '@mui/material';
+import { Box, Divider, Menu, MenuItem } from '@mui/material';
+import { LocationOn } from '@mui/icons-material';
 import { CoordinatesControl } from './controls/coordinates-control.component';
 import { precision } from '../models/definitions';
 import { BookmarkDialog } from '../../bookmarks-feature/components/bookmark-dialog.component';
@@ -45,10 +46,29 @@ export const MapViewComponent: React.FC = () => {
 
     const [toolbarItems, setToolbarItems] = useState<PrimaryToolbarItem[]>([]);
 
-    const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState(false);
+    const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState<boolean>(false);
     const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkModel>();
+    const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
 
     const [isPoiVisible, setIsPoiVisible] = useState(true);
+
+    useEffect(() => {
+        if (!isPickingLocation) { return; }
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                event.stopPropagation();
+                setIsPickingLocation(false);
+                setBookmarkDialogOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isPickingLocation]);
 
     useEffect(() => {
         const toolbarItems: PrimaryToolbarItem[] = buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates);
@@ -93,6 +113,11 @@ export const MapViewComponent: React.FC = () => {
     //#region Map Event Handlers
 
     const handleMapClick = (event: MapLayerMouseEvent) => {
+        if (isPickingLocation) {
+            pickLocation(event);
+            return;
+        }
+
         const { lng, lat } = event.lngLat;
         console.log('Clicked:', lng, lat);
     };
@@ -101,8 +126,31 @@ export const MapViewComponent: React.FC = () => {
 
     //#region Context Menu Handlers
 
+    function pickLocation(event: MapLayerMouseEvent) {
+        const lng = Number(event.lngLat.lng.toFixed(precision));
+        const lat = Number(event.lngLat.lat.toFixed(precision));
+
+        setIsPickingLocation(false);
+
+        setBookmarkDraft((prevBookmark) => ({
+            ...(prevBookmark || EmptyBookmark),
+            kind: prevBookmark?.kind || 'location',
+            location: {
+                ...(prevBookmark?.location || EmptyLocation),
+                longitude: lng,
+                latitude: lat,
+            },
+        }));
+
+        setBookmarkDialogOpen(true);
+    }
+
     const handleOpenContextMenu = (event: MapLayerMouseEvent) => {
         event.originalEvent.preventDefault();
+
+        if (isPickingLocation) {
+            return;
+        }
 
         // Check if a symbol from the poi-layer was clicked
         let symbolFeature = event.features?.find((f) => f.layer.id === 'poi-layer');
@@ -249,9 +297,33 @@ export const MapViewComponent: React.FC = () => {
 
     //#endregion
 
+    const displayBookmarks: BookmarkModel[] = [...bookmarks];
+
+    if (
+        bookmarkDraft &&
+        typeof bookmarkDraft.location?.longitude === 'number' &&
+        typeof bookmarkDraft.location?.latitude === 'number' &&
+        (bookmarkDialogOpen || isPickingLocation)
+    ) {
+        const existingIndex = bookmarkDraft.id ? displayBookmarks.findIndex((b) => b.id === bookmarkDraft.id) : -1;
+        if (existingIndex !== -1) {
+            displayBookmarks[existingIndex] = {
+                ...displayBookmarks[existingIndex],
+                ...bookmarkDraft,
+            };
+        } else {
+            displayBookmarks.push({
+                ...bookmarkDraft,
+                id: bookmarkDraft.id || 'draft-bookmark',
+                name: bookmarkDraft.name || 'New Bookmark',
+                kind: bookmarkDraft.kind || 'location',
+            });
+        }
+    }
+
     const geojsonData: GeoJSON.FeatureCollection = {
         type: 'FeatureCollection',
-        features: bookmarks.map((bookmark, index) => ({
+        features: displayBookmarks.map((bookmark, index) => ({
             type: 'Feature',
             id: bookmark.id || index,
             geometry: {
@@ -262,7 +334,7 @@ export const MapViewComponent: React.FC = () => {
                 id: bookmark.id,
                 bookmarkIndex: index,
                 title: bookmark.name,
-                icon: bookmark.kind,
+                icon: bookmark.kind || 'location',
             },
         })),
     };
@@ -288,8 +360,35 @@ export const MapViewComponent: React.FC = () => {
                     boxSizing: 'border-box',
                 }}
             >
+                {isPickingLocation && (
+                    <Box
+                        sx={{
+                            position: 'absolute',
+                            top: 20,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 1200,
+                            bgcolor: 'rgba(0, 0, 0, 0.85)',
+                            color: '#fff',
+                            px: 2.5,
+                            py: 1,
+                            borderRadius: 2,
+                            boxShadow: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            fontSize: '0.9rem',
+                            pointerEvents: 'none',
+                        }}
+                    >
+                        <LocationOn sx={{ color: '#4fc3f7' }} fontSize="small" />
+                        <span>Left-click on the map to pin coordinate &bull; Press <strong>Esc</strong> to cancel</span>
+                    </Box>
+                )}
+
                 <Map
                     ref={mapRef}
+                    cursor={isPickingLocation ? 'crosshair' : undefined}
                     onLoad={handleMapLoad}
                     initialViewState={{
                         longitude: middleOfUSA[0],
@@ -371,10 +470,20 @@ export const MapViewComponent: React.FC = () => {
                 <BookmarkDialog
                     open={bookmarkDialogOpen}
                     bookmark={bookmarkDraft}
-                    onClose={() => setBookmarkDialogOpen(false)}
+                    onClose={() => {
+                        setBookmarkDialogOpen(false);
+                        setBookmarkDraft(undefined);
+                    }}
+                    onPickLocation={(draft) => {
+                        setBookmarkDraft(draft);
+                        setBookmarkDialogOpen(false);
+                        setIsPickingLocation(true);
+                    }}
                     onSave={(bookmark) => {
                         console.log('OnSave Saving bookmark:1', { bookmark });
                         saveBookmark(bookmark);
+                        setBookmarkDialogOpen(false);
+                        setBookmarkDraft(undefined);
                     }}
                 />
             </div>

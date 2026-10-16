@@ -6,12 +6,15 @@ import {
     DialogTitle,
     FormControl,
     FormHelperText,
+    IconButton,
     InputLabel,
     MenuItem,
     Select,
     Stack,
     TextField,
+    Tooltip,
 } from '@mui/material';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
@@ -25,6 +28,7 @@ interface BookmarkDialogProps {
     bookmark?: BookmarkModel;
     onClose: () => void;
     onSave: (bookmark: BookmarkModel) => void;
+    onPickLocation?: (draftBookmark: BookmarkModel) => void;
 }
 
 interface BookmarkFormData {
@@ -47,7 +51,7 @@ const DEFAULT_VALUES: BookmarkFormData = {
     },
 };
 
-export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, }) => {
+export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, onPickLocation }) => {
 
     const bookmarks: BookmarkModel[] = useSelector(bookmarksSelector);
     const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
@@ -56,9 +60,24 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
         console.log('%bookmarksCategories updated', 'background: yellow; color: black;', { bookmarksCategories });
     }, [bookmarksCategories]);
 
-    const { control, handleSubmit, reset, trigger, formState: { errors }, } = useForm<BookmarkFormData>({
+    const { control, handleSubmit, reset, trigger, getValues, formState: { errors }, } = useForm<BookmarkFormData>({
         defaultValues: DEFAULT_VALUES,
     });
+
+    const handlePickLocationClick = () => {
+        const currentValues = getValues();
+        const draftBookmark: BookmarkModel = {
+            id: bookmark?.id,
+            name: currentValues.name,
+            kind: currentValues.kind,
+            location: {
+                latitude: currentValues.location.latitude === '' ? ('' as any) : Number(currentValues.location.latitude),
+                longitude: currentValues.location.longitude === '' ? ('' as any) : Number(currentValues.location.longitude),
+                altitude: currentValues.location.altitude === '' ? ('' as any) : Number(currentValues.location.altitude),
+            },
+        };
+        onPickLocation?.(draftBookmark);
+    };
 
     /*
      * Initialize the form when the dialog is opened or when the bookmark being
@@ -201,7 +220,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                         )}
                     />
 
-                    <Stack direction="row" spacing={2}>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
                         <Controller
                             name="location.latitude"
                             control={control}
@@ -297,6 +316,17 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                 />
                             )}
                         />
+
+                        <Tooltip title="Pin coordinate on map (Right-click)" arrow>
+                            <IconButton
+                                color="primary"
+                                onClick={handlePickLocationClick}
+                                aria-label="Pin coordinate on map"
+                                sx={{ mt: 1 }}
+                            >
+                                <LocationOnIcon />
+                            </IconButton>
+                        </Tooltip>
 
                         <Controller
                             name="location.altitude"
