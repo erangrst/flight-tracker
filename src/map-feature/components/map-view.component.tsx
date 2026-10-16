@@ -19,6 +19,7 @@ import { useSelector } from 'react-redux';
 import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../../bookmarks-feature/store/bookmarks.selectors';
 import { BookmarkCategoryModel, EmptyBookmarkCategory } from '../../bookmarks-feature/models/bookmark-category.model';
 import { EmptyLocation } from '../models/location.model';
+import { CoordinateModel } from '../models/coordinate.model';
 
 interface ContextMenuState {
     mouseX: number;
@@ -48,10 +49,11 @@ export const MapViewComponent: React.FC = () => {
 
     const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState<boolean>(false);
     const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkModel>();
-    const [bookmarkCoordinatePreview, setBookmarkCoordinatePreview] = useState<{
-        latitude: number;
-        longitude: number;
-    } | null>(null);
+    // const [bookmarkCoordinatePreview, setBookmarkCoordinatePreview] = useState<{
+    //     latitude: number;
+    //     longitude: number;
+    // } | null>(null);
+    const [bookmarkCoordinatePreview, setBookmarkCoordinatePreview] = useState<CoordinateModel | null>(null);
     const [bookmarkDetailsPreview, setBookmarkDetailsPreview] = useState<{
         name: string;
         kind: string;
@@ -126,8 +128,8 @@ export const MapViewComponent: React.FC = () => {
             return;
         }
 
-        const { lng, lat } = event.lngLat;
-        console.log('Clicked:', lng, lat);
+        // const { lng, lat } = event.lngLat;
+        // console.log('Clicked:', lng, lat);
     };
 
     //#endregion
@@ -496,12 +498,30 @@ export const MapViewComponent: React.FC = () => {
                         setBookmarkCoordinatePreview(null);
                         setBookmarkDetailsPreview(null);
                     }}
+                    // onCoordinateChange={(coordinates) => {
+                    //     const { latitude, longitude } = coordinates;
+                    //     if (typeof latitude === 'number' && Number.isFinite(latitude)
+                    //         && typeof longitude === 'number' && Number.isFinite(longitude)) {
+                    //         setBookmarkCoordinatePreview({ latitude, longitude });
+                    //     } else {
+                    //         setBookmarkCoordinatePreview(null);
+                    //     }
+                    // }}
                     onCoordinateChange={(coordinates) => {
-                        const { latitude, longitude } = coordinates;
-                        if (typeof latitude === 'number' && Number.isFinite(latitude)
-                            && typeof longitude === 'number' && Number.isFinite(longitude)) {
-                            setBookmarkCoordinatePreview({ latitude, longitude });
+                        const { lat, lng } = coordinates;
+
+                        const b1 = typeof lat === 'number' && Number.isFinite(lat);
+                        const b2 = typeof lng === 'number' && Number.isFinite(lng);
+                        console.log('BBBBBBBB OnCoordinateChange:', { lat, lng, b1, b2 });
+
+                        if (typeof lat === 'number' && Number.isFinite(lat)
+                            && typeof lng === 'number' && Number.isFinite(lng)) {
+                            console.log('BBBBBBBB OnCoordinateChange inside if :', { lat, lng, b1, b2 });
+
+                            setBookmarkCoordinatePreview({ lat, lng });
                         } else {
+                            console.log('BBBBBBBB OnCoordinateChange inside else :', { lat, lng, b1, b2 });
+
                             setBookmarkCoordinatePreview(null);
                         }
                     }}

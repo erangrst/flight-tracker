@@ -22,6 +22,7 @@ import { BookmarkModel } from '../models/bookmark.model';
 import { useSelector } from 'react-redux';
 import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../store/bookmarks.selectors';
 import { BookmarkCategoryModel } from '../models/bookmark-category.model';
+import { CoordinateModel } from '../../map-feature/models/coordinate.model';
 
 interface BookmarkDialogProps {
     open: boolean;
@@ -29,10 +30,13 @@ interface BookmarkDialogProps {
     onClose: () => void;
     onSave: (bookmark: BookmarkModel) => void;
     onPickLocation: (draftBookmark: BookmarkModel) => void;
-    onCoordinateChange: (coordinates: {
-        latitude: number | '';
-        longitude: number | '';
-    }) => void;
+    // onCoordinateChange: (coordinates: {
+    //     latitude: number | '';
+    //     longitude: number | '';
+    // }) => void;
+
+    onCoordinateChange: (coordinates: CoordinateModel) => void;
+
     onDetailsChange: (details: { name: string; kind: string }) => void;
 }
 
@@ -86,9 +90,13 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
 
     const handleCoordinateChange = () => {
         const location = getValues('location');
+        // onCoordinateChange?.({
+        //     latitude: location.latitude,
+        //     longitude: location.longitude,
+        // });
         onCoordinateChange?.({
-            latitude: location.latitude,
-            longitude: location.longitude,
+            lat: location.latitude,
+            lng: location.longitude,
         });
     };
 

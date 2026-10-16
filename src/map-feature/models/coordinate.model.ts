@@ -1,4 +1,4 @@
 export interface CoordinateModel {
-  lng: number;
-  lat: number;
+  lng: number | null;
+  lat: number | null;
 }
