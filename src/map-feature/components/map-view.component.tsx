@@ -271,6 +271,7 @@ export const MapViewComponent: React.FC = () => {
                     position: 'relative',
                     width: '100%',
                     height: '100%',
+                    boxSizing: 'border-box',
                 }}
             >
                 <Map
