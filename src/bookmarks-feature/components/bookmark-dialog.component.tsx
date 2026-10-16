@@ -28,7 +28,11 @@ interface BookmarkDialogProps {
     bookmark?: BookmarkModel;
     onClose: () => void;
     onSave: (bookmark: BookmarkModel) => void;
-    onPickLocation?: (draftBookmark: BookmarkModel) => void;
+    onPickLocation: (draftBookmark: BookmarkModel) => void;
+    onCoordinateChange: (coordinates: {
+        latitude: number | '';
+        longitude: number | '';
+    }) => void;
 }
 
 interface BookmarkFormData {
@@ -51,7 +55,7 @@ const DEFAULT_VALUES: BookmarkFormData = {
     },
 };
 
-export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, onPickLocation }) => {
+export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClose, onSave, onPickLocation, onCoordinateChange }) => {
 
     const bookmarks: BookmarkModel[] = useSelector(bookmarksSelector);
     const bookmarksCategories: BookmarkCategoryModel[] = useSelector(bookmarkCategoriesSelector);
@@ -77,6 +81,14 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
             },
         };
         onPickLocation?.(draftBookmark);
+    };
+
+    const handleCoordinateChange = () => {
+        const location = getValues('location');
+        onCoordinateChange?.({
+            latitude: location.latitude,
+            longitude: location.longitude,
+        });
     };
 
     /*
@@ -252,6 +264,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                         field.onChange(
                                             value === '' ? '' : Number(value),
                                         );
+                                        handleCoordinateChange();
                                     }}
                                     label="Latitude"
                                     type="number"
@@ -301,6 +314,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
                                         field.onChange(
                                             value === '' ? '' : Number(value),
                                         );
+                                        handleCoordinateChange();
                                     }}
                                     label="Longitude"
                                     type="number"

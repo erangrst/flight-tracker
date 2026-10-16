@@ -48,6 +48,10 @@ export const MapViewComponent: React.FC = () => {
 
     const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState<boolean>(false);
     const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkModel>();
+    const [bookmarkCoordinatePreview, setBookmarkCoordinatePreview] = useState<{
+        latitude: number;
+        longitude: number;
+    } | null>(null);
     const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
 
     const [isPoiVisible, setIsPoiVisible] = useState(true);
@@ -141,6 +145,7 @@ export const MapViewComponent: React.FC = () => {
                 latitude: lat,
             },
         }));
+        setBookmarkCoordinatePreview(null);
 
         setBookmarkDialogOpen(true);
     }
@@ -275,6 +280,7 @@ export const MapViewComponent: React.FC = () => {
         }
 
         setBookmarkDraft(tmpDraftBookmark);
+        setBookmarkCoordinatePreview(null);
         setBookmarkDialogOpen(true);
     }
 
@@ -298,25 +304,33 @@ export const MapViewComponent: React.FC = () => {
     //#endregion
 
     const displayBookmarks: BookmarkModel[] = [...bookmarks];
+    const bookmarkToDisplay = bookmarkDraft && bookmarkCoordinatePreview
+        ? {
+            ...bookmarkDraft,
+            location: {
+                ...bookmarkDraft.location,
+                ...bookmarkCoordinatePreview,
+            },
+        }
+        : bookmarkDraft;
 
-    if (
-        bookmarkDraft &&
-        typeof bookmarkDraft.location?.longitude === 'number' &&
-        typeof bookmarkDraft.location?.latitude === 'number' &&
+    if (bookmarkToDisplay &&
+        typeof bookmarkToDisplay.location?.longitude === 'number' &&
+        typeof bookmarkToDisplay.location?.latitude === 'number' &&
         (bookmarkDialogOpen || isPickingLocation)
     ) {
-        const existingIndex = bookmarkDraft.id ? displayBookmarks.findIndex((b) => b.id === bookmarkDraft.id) : -1;
+        const existingIndex = bookmarkToDisplay.id ? displayBookmarks.findIndex((b) => b.id === bookmarkToDisplay.id) : -1;
         if (existingIndex !== -1) {
             displayBookmarks[existingIndex] = {
                 ...displayBookmarks[existingIndex],
-                ...bookmarkDraft,
+                ...bookmarkToDisplay,
             };
         } else {
             displayBookmarks.push({
-                ...bookmarkDraft,
-                id: bookmarkDraft.id || 'draft-bookmark',
-                name: bookmarkDraft.name || 'New Bookmark',
-                kind: bookmarkDraft.kind || 'location',
+                ...bookmarkToDisplay,
+                id: bookmarkToDisplay.id || 'draft-bookmark',
+                name: bookmarkToDisplay.name || 'New Bookmark',
+                kind: bookmarkToDisplay.kind || 'location',
             });
         }
     }
@@ -473,9 +487,20 @@ export const MapViewComponent: React.FC = () => {
                     onClose={() => {
                         setBookmarkDialogOpen(false);
                         setBookmarkDraft(undefined);
+                        setBookmarkCoordinatePreview(null);
+                    }}
+                    onCoordinateChange={(coordinates) => {
+                        const { latitude, longitude } = coordinates;
+                        if (typeof latitude === 'number' && Number.isFinite(latitude)
+                            && typeof longitude === 'number' && Number.isFinite(longitude)) {
+                            setBookmarkCoordinatePreview({ latitude, longitude });
+                        } else {
+                            setBookmarkCoordinatePreview(null);
+                        }
                     }}
                     onPickLocation={(draft) => {
                         setBookmarkDraft(draft);
+                        setBookmarkCoordinatePreview(null);
                         setBookmarkDialogOpen(false);
                         setIsPickingLocation(true);
                     }}
@@ -484,6 +509,7 @@ export const MapViewComponent: React.FC = () => {
                         saveBookmark(bookmark);
                         setBookmarkDialogOpen(false);
                         setBookmarkDraft(undefined);
+                        setBookmarkCoordinatePreview(null);
                     }}
                 />
             </div>
