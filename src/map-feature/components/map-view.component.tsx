@@ -12,7 +12,7 @@ import { CoordinatesControl } from './controls/coordinates-control.component';
 import { precision } from '../models/definitions';
 import { BookmarkDialog } from '../../bookmarks-feature/components/bookmark-dialog.component';
 import { BookmarkModel, EmptyBookmark } from '../../bookmarks-feature/models/bookmark.model';
-import { deleteBookmark, saveBookmark } from '../../bookmarks-feature/logic/bookmarks.logic';
+import { deleteBookmark, saveBookmark, setHome } from '../../bookmarks-feature/logic/bookmarks.logic';
 import { poiLayerStyle } from '../layers-configuration';
 import { useSelector } from 'react-redux';
 import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../../bookmarks-feature/store/bookmarks.selectors';
@@ -162,6 +162,20 @@ export const MapViewComponent: React.FC = () => {
 
         closeContextMenu();
         openBookmarkDialog(bookmarkDraft);
+    };
+
+    function handleSetHome(event?: React.MouseEvent) {
+        event?.stopPropagation();
+
+        const bookmarkDraft = contextMenu && contextMenu.selectedBookmark || null;
+
+        if (!bookmarkDraft) {
+            console.error('No bookmark selected for set home.');
+            return;
+        }
+
+        closeContextMenu();
+        setHome(bookmarkDraft);
     };
 
     function handleUpdateBookmark(event?: React.MouseEvent) {
@@ -337,9 +351,15 @@ export const MapViewComponent: React.FC = () => {
 
                     {contextMenu?.selectedBookmark && (
                         <>
-                            <Divider sx={{ height: '1px', mx: '4px' }} />
+                            <Divider sx={{ height: '2px', mx: '4px', border: 0, bgcolor: 'primary.main' }} />
                             <MenuItem onClick={handleUpdateBookmark}>Update Bookmark</MenuItem>
                             <MenuItem onClick={handleDeleteBookmark}>Delete Bookmark</MenuItem>
+                            {contextMenu.selectedBookmark.kind?.toLowerCase() !== 'home' && (
+                                <>
+                                    <Divider sx={{ height: '2px', mx: '4px', border: 0, bgcolor: 'primary.main' }} />
+                                    <MenuItem onClick={handleSetHome}>Set Home Location</MenuItem>
+                                </>
+                            )}
                         </>
                     )}
 

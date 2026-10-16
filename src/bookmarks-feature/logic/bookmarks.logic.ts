@@ -3,9 +3,10 @@ import { BookmarkCategoryModel } from '../models/bookmark-category.model';
 import { BookmarkModel } from '../models/bookmark.model';
 import { deleteBookmarksApi, getBookmarksApi, upsertBookmarksApi } from '../proxy/bookmarks.proxy';
 import { dispatchRemoveBookmark, dispatchSetBookmark, dispatchSetBookmarkCategories, dispatchSetBookmarks } from '../store/bookmarks.actions';
-import { addSlice } from '../../infra/redux/store';
+import { addSlice, store } from '../../infra/redux/store';
 import bookmarksReducer from '../store/bookmarks.slice';
 import { showNotification } from '../../infra/notifications/toast-notifier';
+import { BookmarksRootState } from '../store/bookmarks.selectors';
 
 export function initBookmarks() {
   addSlice('bookmarks', bookmarksReducer);
@@ -79,3 +80,46 @@ export async function deleteBookmark(bookmark: BookmarkModel) {
     showNotification('deleteBookmark', 'error', 'Failed to delete bookmark', error);
   }
 }
+
+export async function setHome(selectedBookmark: BookmarkModel): Promise<void> {
+  try {
+    const state = store.getState() as BookmarksRootState;
+    const bookmarks = state.bookmarks?.bookmarks || [];
+
+    // Find previous home bookmark if one exists
+    const oldHome = bookmarks.find(
+      (b) => b.kind?.toLowerCase() === 'home' && b.id !== selectedBookmark.id
+    );
+
+    // If an existing home bookmark is found, change it to location
+    if (oldHome) {
+      const updatedOldHome: BookmarkModel = {
+        ...oldHome,
+        kind: 'location',
+      };
+      const responseOld = await upsertBookmarksApi(updatedOldHome);
+      if (responseOld.success) {
+        dispatchSetBookmark(responseOld.data || updatedOldHome);
+      } else {
+        console.error('Failed to update old home bookmark to location:', responseOld.message);
+      }
+    }
+
+    // Set the selected bookmark to home
+    const updatedNewHome: BookmarkModel = {
+      ...selectedBookmark,
+      kind: 'home',
+    };
+    const responseNew = await upsertBookmarksApi(updatedNewHome);
+    if (responseNew.success) {
+      dispatchSetBookmark(responseNew.data || updatedNewHome);
+      showNotification('setHome', 'success', `"${selectedBookmark.name}" set as Home location`);
+    } else {
+      showNotification('setHome', 'error', 'Failed to set home location', responseNew.message || 'Unknown error');
+    }
+  } catch (error) {
+    console.error('Error in setHome:', { error });
+    showNotification('setHome', 'error', 'Failed to set home location', error);
+  }
+}
+
