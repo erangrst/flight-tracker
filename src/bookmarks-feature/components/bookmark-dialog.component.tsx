@@ -17,7 +17,6 @@ import {
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { FC, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-
 import { BookmarkModel } from '../models/bookmark.model';
 import { useSelector } from 'react-redux';
 import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../store/bookmarks.selectors';
@@ -30,13 +29,7 @@ interface BookmarkDialogProps {
     onClose: () => void;
     onSave: (bookmark: BookmarkModel) => void;
     onPickLocation: (draftBookmark: BookmarkModel) => void;
-    // onCoordinateChange: (coordinates: {
-    //     latitude: number | '';
-    //     longitude: number | '';
-    // }) => void;
-
     onCoordinateChange: (coordinates: CoordinateModel) => void;
-
     onDetailsChange: (details: { name: string; kind: string }) => void;
 }
 
@@ -69,9 +62,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
         console.log('%bookmarksCategories updated', 'background: yellow; color: black;', { bookmarksCategories });
     }, [bookmarksCategories]);
 
-    const { control, handleSubmit, reset, trigger, getValues, formState: { errors }, } = useForm<BookmarkFormData>({
-        defaultValues: DEFAULT_VALUES,
-    });
+    const { control, handleSubmit, reset, trigger, getValues, formState: { errors }, } = useForm<BookmarkFormData>({ defaultValues: DEFAULT_VALUES, });
 
     const handlePickLocationClick = () => {
         const currentValues = getValues();
@@ -90,13 +81,9 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
 
     const handleCoordinateChange = () => {
         const location = getValues('location');
-        // onCoordinateChange?.({
-        //     latitude: location.latitude,
-        //     longitude: location.longitude,
-        // });
         onCoordinateChange?.({
-            lat: location.latitude,
-            lng: location.longitude,
+            lat: location.latitude || null,
+            lng: location.longitude || null,
         });
     };
 
@@ -105,9 +92,7 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
      * edited changes.
      */
     useEffect(() => {
-        if (!open) {
-            return;
-        }
+        if (!open) { return; }
 
         if (bookmark) {
             reset({
@@ -144,7 +129,6 @@ export const BookmarkDialog: FC<BookmarkDialogProps> = ({ open, bookmark, onClos
             },
         };
 
-        // alert('OnSave dlg');
         onSave(result);
         onClose();
     };
