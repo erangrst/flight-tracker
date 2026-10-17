@@ -194,7 +194,7 @@ export const InformationComponent: React.FC<InformationComponentProps> = ({
                 >
 
                     <Stack spacing={2}>
-                        <Card variant="outlined" sx={{ bgcolor: 'grey.50' }}>
+                        <Card variant="outlined" sx={{ bgcolor: 'background.default' }}>
                             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                                     <MapOutlinedIcon fontSize="small" color="primary" />
