@@ -1,6 +1,6 @@
 import { initBookmarks } from "./bookmarks-feature/logic/bookmarks.logic";
 import { MapViewComponent } from "./map-feature/components/map-view.component";
-import { InformationComponent } from "./layout-feature/components/InformationComponent";
+import { SideBarComponent } from "./layout-feature/components/sidebar.component";
 import { Toaster } from 'sonner';
 import { Box, CssBaseline, ThemeProvider } from '@mui/material';
 import { useState } from "react";
@@ -35,7 +35,7 @@ export default function App() {
         }}
       >
         <Toaster position="top-right" richColors closeButton />
-        <InformationComponent isExpanded={isExpanded} onExpandedToggle={handleExpandedToggle} expandedWidth={320} collapsedWidth={48} />
+        <SideBarComponent isExpanded={isExpanded} onExpandedToggle={handleExpandedToggle} expandedWidth={320} collapsedWidth={48} />
         <Box component="main"
           sx={{
             flex: 1,

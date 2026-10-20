@@ -7,12 +7,28 @@ import { addSlice, store } from '../../infra/redux/store';
 import bookmarksReducer from '../store/bookmarks.slice';
 import { showNotification } from '../../infra/notifications/toast-notifier';
 import { BookmarksRootState } from '../store/bookmarks.selectors';
+import { centerMap } from '../../map-feature/logic/map.logic';
+import React from 'react';
+import BookmarksOutlinedIcon from '@mui/icons-material/BookmarksOutlined';
+import { registerSidebarItem } from '../../layout-feature/logic/sidebar.logic';
+import { BookmarksPanel } from '../components/bookmarks-panel.component';
 
 export function initBookmarks() {
   addSlice('bookmarks', bookmarksReducer);
 
   loadBookmarkCategories();
   loadBookmarks();
+
+  registerSidebarItem({
+    id: 'bookmarks',
+    icon: React.createElement(BookmarksOutlinedIcon),
+    tooltip: 'Bookmarks',
+    title: 'Bookmarks',
+    component: BookmarksPanel,
+    props: {
+      title: 'Bookmarks',
+    },
+  });
 }
 
 export async function loadBookmarkCategories(): Promise<void> {
@@ -122,4 +138,18 @@ export async function setHome(selectedBookmark: BookmarkModel): Promise<void> {
     showNotification('setHome', 'error', 'Failed to set home location', error);
   }
 }
+export function centerBookmarkOnMap(bookmark: BookmarkModel): void {
+  if (
+    bookmark?.location &&
+    typeof bookmark.location.longitude === 'number' &&
+    typeof bookmark.location.latitude === 'number'
+  ) {
+    centerMap(bookmark.location.longitude, bookmark.location.latitude);
+  }
+}
 
+export function openBookmarkDialogEvent(bookmark?: BookmarkModel): void {
+  window.dispatchEvent(
+    new CustomEvent('bookmarks:open-dialog', { detail: { bookmark } })
+  );
+}

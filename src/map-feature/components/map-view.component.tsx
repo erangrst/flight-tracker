@@ -7,6 +7,7 @@ import { ViewportBoundsModel } from '../models/viewport-bounds.model';
 import { libertyMapStyle } from '../map-styles/build-in-styles';
 import { MapToolbarComponent, PrimaryToolbarItem } from './toolbar/map-toolbar.component';
 import { buildToolbarItems } from './toolbar/map-toolbar-configuration';
+import { setActiveMapRef } from '../logic/map.logic';
 import { Box, Divider, Menu, MenuItem } from '@mui/material';
 import { LocationOn } from '@mui/icons-material';
 import { CoordinatesControl } from './controls/coordinates-control.component';
@@ -81,6 +82,41 @@ export const MapViewComponent: React.FC = () => {
         setToolbarItems(toolbarItems);
         console.log('Toolbar items built:', { toolbarItems });
     }, [mapRef]);
+
+    useEffect(() => {
+        setActiveMapRef(mapRef);
+        return () => {
+            setActiveMapRef(null);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleCenter = (event: Event) => {
+            const customEvent = event as CustomEvent<{ longitude: number; latitude: number; zoom?: number }>;
+            const { longitude, latitude, zoom } = customEvent.detail || {};
+            const map = mapRef.current?.getMap();
+            if (map && typeof longitude === 'number' && typeof latitude === 'number') {
+                map.flyTo({
+                    center: [longitude, latitude],
+                    zoom: zoom ?? Math.max(map.getZoom(), 12),
+                    essential: true,
+                });
+            }
+        };
+
+        const handleOpenEditor = (event: Event) => {
+            const customEvent = event as CustomEvent<{ bookmark?: BookmarkModel }>;
+            openBookmarkDialog(customEvent.detail?.bookmark || { ...EmptyBookmark, location: { ...EmptyLocation } });
+        };
+
+        window.addEventListener('map:center', handleCenter);
+        window.addEventListener('bookmarks:open-dialog', handleOpenEditor);
+
+        return () => {
+            window.removeEventListener('map:center', handleCenter);
+            window.removeEventListener('bookmarks:open-dialog', handleOpenEditor);
+        };
+    }, []);
 
 
     async function addBookmarkCategoryImage(map: maplibregl.Map, bookmarkCategory: BookmarkCategoryModel) {
