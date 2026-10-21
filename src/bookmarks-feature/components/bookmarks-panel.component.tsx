@@ -146,7 +146,6 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
       {
         id: 'name',
         header: 'Name',
-        // flexgrow: 1,
         width: 140,
         cell: ({ row }: ICellProps) => (
           <Box
@@ -218,7 +217,7 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
       {
         id: 'actions',
         header: '',
-        width: 48,
+        width: 24,
         cell: ({ row }: ICellProps) => {
           return (
             <Box
@@ -261,6 +260,7 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
         overflow: 'hidden',
         boxSizing: 'border-box',
         bgcolor: 'background.paper',
+        // border: '2px solid green',
       }}>
       {/* Top Toolbar Area */}
       <Box
@@ -274,9 +274,6 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
           borderColor: 'divider',
           flexShrink: 0,
         }}>
-        {/* <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'text.primary' }}>
-          {title}
-        </Typography> */}
 
         <Tooltip title='Add Bookmark' arrow placement='bottom'>
           <IconButton color='primary' size='small' onClick={handleAddClick} aria-label='Add Bookmark'>
@@ -288,13 +285,17 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
       {/* Grid Container - Occupies the entire remaining height with scrollbar when exceeded */}
       <Box
         sx={{
-          flex: 1,
+          flex: '1 1 auto',
           minHeight: 0,
           width: '100%',
-          height: '100%',
           overflow: 'hidden',
           position: 'relative',
+          padding: '2px',
+          boxSizing: 'border-box',
           '& .wx-header .wx-cell': {
+            boxSizing: 'border-box',
+          },
+          '& .wx-table-box': {
             boxSizing: 'border-box',
           },
           '--wx-background': theme.palette.background.paper,
