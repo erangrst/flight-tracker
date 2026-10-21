@@ -1,16 +1,5 @@
 import React, { FC, useMemo, useState } from 'react';
-import {
-  Box,
-  Divider,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Tooltip,
-  Typography,
-  useTheme,
-} from '@mui/material';
+import { Box, Divider, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Tooltip, Typography, useTheme } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
@@ -23,18 +12,9 @@ import '@svar-ui/react-grid/all.css';
 
 import { BookmarkModel } from '../models/bookmark.model';
 import { BookmarkCategoryModel } from '../models/bookmark-category.model';
-import {
-  bookmarkCategoriesSelector,
-  bookmarksSelector,
-  selectedBookmarkIdSelector,
-} from '../store/bookmarks.selectors';
+import { bookmarkCategoriesSelector, bookmarksSelector, selectedBookmarkIdSelector } from '../store/bookmarks.selectors';
 import { dispatchSetSelectedBookmark } from '../store/bookmarks.actions';
-import {
-  centerBookmarkOnMap,
-  deleteBookmark,
-  openBookmarkDialogEvent,
-  setHome,
-} from '../logic/bookmarks.logic';
+import { centerBookmarkOnMap, deleteBookmark, openBookmarkDialogEvent, setHome } from '../logic/bookmarks.logic';
 
 export interface BookmarksPanelProps {
   title?: string;
@@ -45,14 +25,7 @@ export interface BookmarksPanelProps {
   onDeleteBookmark?: (bookmark: BookmarkModel) => void;
 }
 
-export const BookmarksPanel: FC<BookmarksPanelProps> = ({
-  title = 'Bookmarks',
-  onAddBookmark,
-  onUpdateBookmark,
-  onGotoBookmark,
-  onSetHomeBookmark,
-  onDeleteBookmark,
-}) => {
+export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', onAddBookmark, onUpdateBookmark, onGotoBookmark, onSetHomeBookmark, onDeleteBookmark }) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
 
@@ -173,7 +146,7 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
       {
         id: 'name',
         header: 'Name',
-        flexgrow: 1,
+        // flexgrow: 1,
         width: 140,
         cell: ({ row }: ICellProps) => (
           <Box
@@ -183,18 +156,16 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
               height: '100%',
               overflow: 'hidden',
               px: 0.5,
-            }}
-          >
+            }}>
             <Typography
-              variant="body2"
+              variant='body2'
               noWrap
               title={row.name}
               sx={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
                 color: 'text.primary',
-              }}
-            >
+              }}>
               {row.name}
             </Typography>
           </Box>
@@ -214,18 +185,16 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
-              }}
-            >
-              <Tooltip title={categoryLabel} arrow placement="top">
+              }}>
+              <Tooltip title={categoryLabel} arrow placement='top'>
                 <Box
-                  component="span"
+                  component='span'
                   sx={{
                     display: 'inline-flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     cursor: 'pointer',
-                  }}
-                >
+                  }}>
                   {category?.icon ? (
                     <img
                       src={category.icon}
@@ -258,10 +227,9 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 height: '100%',
-              }}
-            >
+              }}>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpenMenu(e.currentTarget, row as unknown as BookmarkModel);
@@ -273,9 +241,8 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
                     color: 'text.primary',
                   },
                 }}
-                aria-label="Bookmark actions"
-              >
-                <MoreVertIcon fontSize="small" />
+                aria-label='Bookmark actions'>
+                <MoreVertIcon fontSize='small' />
               </IconButton>
             </Box>
           );
@@ -294,32 +261,25 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
         overflow: 'hidden',
         boxSizing: 'border-box',
         bgcolor: 'background.paper',
-      }}
-    >
+      }}>
       {/* Top Toolbar Area */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
+          justifyContent: 'flex-end',
           px: 2,
           py: 1,
           borderBottom: 1,
           borderColor: 'divider',
           flexShrink: 0,
-        }}
-      >
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'text.primary' }}>
+        }}>
+        {/* <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'text.primary' }}>
           {title}
-        </Typography>
+        </Typography> */}
 
-        <Tooltip title="Add Bookmark" arrow placement="bottom">
-          <IconButton
-            color="primary"
-            size="small"
-            onClick={handleAddClick}
-            aria-label="Add Bookmark"
-          >
+        <Tooltip title='Add Bookmark' arrow placement='bottom'>
+          <IconButton color='primary' size='small' onClick={handleAddClick} aria-label='Add Bookmark'>
             <AddIcon />
           </IconButton>
         </Tooltip>
@@ -334,6 +294,9 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
           height: '100%',
           overflow: 'hidden',
           position: 'relative',
+          '& .wx-header .wx-cell': {
+            boxSizing: 'border-box',
+          },
           '--wx-background': theme.palette.background.paper,
           '--wx-color-font': theme.palette.text.primary,
           '--wx-table-header-background': isDark ? '#1e2936' : '#f5f7fa',
@@ -342,17 +305,8 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
           '--wx-table-header-cell-border': `1px solid ${theme.palette.divider}`,
           '--wx-table-select-background': isDark ? 'rgba(144, 202, 249, 0.16)' : 'rgba(25, 118, 210, 0.08)',
           '--wx-table-select-color': theme.palette.text.primary,
-        }}
-      >
-        <Grid
-          data={gridData}
-          columns={columns}
-          select={true}
-          multiselect={false}
-          selectedRows={selectedBookmarkId ? [selectedBookmarkId] : []}
-          onSelectRow={handleSelectRow}
-          init={handleGridInit}
-        />
+        }}>
+        <Grid data={gridData} columns={columns} select={true} multiselect={false} selectedRows={selectedBookmarkId ? [selectedBookmarkId] : []} onSelectRow={handleSelectRow} init={handleGridInit} />
       </Box>
 
       {/* Row Action Menu */}
@@ -372,34 +326,31 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
               py: 0.5,
             },
           },
-        }}
-      >
+        }}>
         {/* 1. Update icon + Update title */}
         <MenuItem onClick={handleUpdateClick} dense>
           <ListItemIcon sx={{ minWidth: 32 }}>
-            <EditOutlinedIcon fontSize="small" />
+            <EditOutlinedIcon fontSize='small' />
           </ListItemIcon>
-          <ListItemText primary="Update" />
+          <ListItemText primary='Update' />
         </MenuItem>
 
         {/* 2. Goto title (icons and text vertically aligned together) */}
         <MenuItem onClick={handleGotoClick} dense>
           <ListItemIcon sx={{ minWidth: 32 }} />
-          <ListItemText primary="Goto" />
+          <ListItemText primary='Goto' />
         </MenuItem>
 
         {/* 3. Divider before Set Home (only if not Home) */}
-        {activeBookmark?.kind?.toLowerCase() !== 'home' && (
-          <Divider sx={{ my: 0.5 }} />
-        )}
+        {activeBookmark?.kind?.toLowerCase() !== 'home' && <Divider sx={{ my: 0.5 }} />}
 
         {/* 4. Home icon + Set Home title (only if not Home) */}
         {activeBookmark?.kind?.toLowerCase() !== 'home' && (
           <MenuItem onClick={handleSetHomeClick} dense>
             <ListItemIcon sx={{ minWidth: 32 }}>
-              <HomeOutlinedIcon fontSize="small" />
+              <HomeOutlinedIcon fontSize='small' />
             </ListItemIcon>
-            <ListItemText primary="Set Home" />
+            <ListItemText primary='Set Home' />
           </MenuItem>
         )}
 
@@ -409,9 +360,9 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
         {/* 6. Delete icon + Delete title */}
         <MenuItem onClick={handleDeleteClick} dense sx={{ color: 'error.main' }}>
           <ListItemIcon sx={{ minWidth: 32 }}>
-            <DeleteOutlinedIcon fontSize="small" color="error" />
+            <DeleteOutlinedIcon fontSize='small' color='error' />
           </ListItemIcon>
-          <ListItemText primary="Delete" sx={{ color: 'error.main' }} />
+          <ListItemText primary='Delete' sx={{ color: 'error.main' }} />
         </MenuItem>
       </Menu>
     </Box>
@@ -422,4 +373,3 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({
 export const BookmarkPanel = BookmarksPanel;
 export const BoommarlPanel = BookmarksPanel;
 export default BookmarksPanel;
-
