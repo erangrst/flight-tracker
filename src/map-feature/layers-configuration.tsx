@@ -1,4 +1,4 @@
-import { SymbolLayerSpecification } from "maplibre-gl";
+import { CircleLayerSpecification, FillLayerSpecification, LineLayerSpecification, SymbolLayerSpecification } from "maplibre-gl";
 
 
 export function poiLayerStyle(isPoiVisible: boolean) {
@@ -15,6 +15,63 @@ export function poiLayerStyle(isPoiVisible: boolean) {
             'text-anchor': 'top',
             'visibility': isPoiVisible ? 'visible' : 'none'
         }
+    };
+
+    return layerStyle;
+}
+
+export function builtInAreasFiltersLayerStyle(isVisible: boolean = true) {
+    const layerStyle: FillLayerSpecification = {
+        id: 'builtin-area-filters-source',
+        type: 'fill',
+        source: 'builtin-area-filters-source',
+        filter: ['==', '$type', 'Polygon'],
+        paint: {
+            'fill-color': 'darkorange',
+            'fill-opacity': 0.15,
+            'fill-outline-color': 'darkorange',
+        },
+        layout: {
+            'visibility': isVisible ? 'visible' : 'none',
+        },
+    };
+
+    return layerStyle;
+}
+
+export function builtInAreasFiltersOutlineLayerStyle(isVisible: boolean = true) {
+    const layerStyle: LineLayerSpecification = {
+        id: 'builtin-area-filters-source-outline',
+        type: 'line',
+        source: 'builtin-area-filters-source-outline',
+        filter: ['==', '$type', 'Polygon'],
+        paint: {
+            'line-color': 'red',
+            'line-width': 2,
+        },
+        layout: {
+            'visibility': isVisible ? 'visible' : 'none',
+        },
+    };
+
+    return layerStyle;
+}
+
+export function builtInAreasFiltersCenterLayerStyle(isVisible: boolean = true) {
+    const layerStyle: CircleLayerSpecification = {
+        id: 'builtin-area-filters-source-center',
+        type: 'circle',
+        source: 'builtin-area-filters-source-center',
+        filter: ['==', '$type', 'Point'],
+        paint: {
+            'circle-radius': 5,
+            'circle-color': 'darkorange',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff',
+        },
+        layout: {
+            'visibility': isVisible ? 'visible' : 'none',
+        },
     };
 
     return layerStyle;

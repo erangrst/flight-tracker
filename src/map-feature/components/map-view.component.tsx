@@ -15,7 +15,8 @@ import { precision } from '../models/definitions';
 import { BookmarkDialog } from '../../bookmarks-feature/components/bookmark-dialog.component';
 import { BookmarkModel, EmptyBookmark } from '../../bookmarks-feature/models/bookmark.model';
 import { deleteBookmark, saveBookmark, setHome } from '../../bookmarks-feature/logic/bookmarks.logic';
-import { poiLayerStyle } from '../layers-configuration';
+import { builtInAreasFiltersCenterLayerStyle, builtInAreasFiltersLayerStyle, builtInAreasFiltersOutlineLayerStyle, poiLayerStyle } from '../layers-configuration';
+import { builtInAreaFiltersGeoJson } from '../logic/spatial.logic';
 import { useSelector } from 'react-redux';
 import { bookmarkCategoriesSelector, BookmarksRootState, bookmarksSelector } from '../../bookmarks-feature/store/bookmarks.selectors';
 import { BookmarkCategoryModel, EmptyBookmarkCategory } from '../../bookmarks-feature/models/bookmark-category.model';
@@ -42,6 +43,8 @@ export const MapViewComponent: React.FC = () => {
 
     const [showOverviewMap, setShowOverviewMap] = useState(false);
     const [showCoordinates, setShowCoordinates] = useState(true);
+    const [showBuiltinAreaFilter, setShowBuiltinAreaFilter] = useState(true);
+
     const [mapLoaded, setMapLoaded] = useState(false);
 
     const [viewportBounds, setViewportBounds] = useState<ViewportBoundsModel>({ west: -180, south: -85, east: 180, north: 85, });
@@ -51,10 +54,7 @@ export const MapViewComponent: React.FC = () => {
     const [bookmarkDialogOpen, setBookmarkDialogOpen] = useState<boolean>(false);
     const [bookmarkDraft, setBookmarkDraft] = useState<BookmarkModel>();
     const [bookmarkCoordinatePreview, setBookmarkCoordinatePreview] = useState<CoordinateModel | null>(null);
-    const [bookmarkDetailsPreview, setBookmarkDetailsPreview] = useState<{
-        name: string;
-        kind: string;
-    } | null>(null);
+    const [bookmarkDetailsPreview, setBookmarkDetailsPreview] = useState<{ name: string; kind: string; } | null>(null);
     const [isPickingLocation, setIsPickingLocation] = useState<boolean>(false);
 
     const [isPoiVisible, setIsPoiVisible] = useState(true);
@@ -78,7 +78,7 @@ export const MapViewComponent: React.FC = () => {
     }, [isPickingLocation]);
 
     useEffect(() => {
-        const toolbarItems: PrimaryToolbarItem[] = buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates);
+        const toolbarItems: PrimaryToolbarItem[] = buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates, setShowBuiltinAreaFilter);
         setToolbarItems(toolbarItems);
         console.log('Toolbar items built:', { toolbarItems });
     }, [mapRef]);
@@ -474,6 +474,12 @@ export const MapViewComponent: React.FC = () => {
 
                     {showCoordinates && <CoordinatesControl position='bottom-right' precision={precision} />}
 
+                    <Source id="builtin-area-filters-source" type="geojson" data={builtInAreaFiltersGeoJson}>
+                        <Layer {...builtInAreasFiltersLayerStyle(showBuiltinAreaFilter)} />
+                        <Layer {...builtInAreasFiltersOutlineLayerStyle(showBuiltinAreaFilter)} />
+                        <Layer {...builtInAreasFiltersCenterLayerStyle(showBuiltinAreaFilter)} />
+                    </Source>
+
                     <Source id="poi-source" type="geojson" data={geojsonData}>
                         <Layer {...(poiLayerStyle(isPoiVisible))} />
                     </Source>
@@ -494,11 +500,7 @@ export const MapViewComponent: React.FC = () => {
                 >
                     <MenuItem onClick={copyCoordinatesToClipboard}>Copy coordinates</MenuItem>
 
-                    <MenuItem onClick={(event) => {
-                        handleAddBookmark(event);
-                    }} >
-                        Add Bookmark
-                    </MenuItem>
+                    <MenuItem onClick={(event) => { handleAddBookmark(event); }} >Add Bookmark</MenuItem>
 
                     {contextMenu?.selectedBookmark && (
                         <>
