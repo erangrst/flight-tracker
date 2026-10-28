@@ -9,7 +9,6 @@ import PlaceIcon from '@mui/icons-material/Place';
 import { useSelector } from 'react-redux';
 import { Grid, ICellProps, IColumnConfig, IApi } from '@svar-ui/react-grid';
 import '@svar-ui/react-grid/all.css';
-
 import { BookmarkModel } from '../models/bookmark.model';
 import { BookmarkCategoryModel } from '../models/bookmark-category.model';
 import { bookmarkCategoriesSelector, bookmarksSelector, selectedBookmarkIdSelector } from '../store/bookmarks.selectors';
@@ -369,8 +368,3 @@ export const BookmarksPanel: FC<BookmarksPanelProps> = ({ title = 'Bookmarks', o
     </Box>
   );
 };
-
-// Aliases to match requested naming
-export const BookmarkPanel = BookmarksPanel;
-export const BoommarlPanel = BookmarksPanel;
-export default BookmarksPanel;

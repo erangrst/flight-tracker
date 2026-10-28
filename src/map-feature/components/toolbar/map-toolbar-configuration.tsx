@@ -1,9 +1,9 @@
-import { handleZoomIn, handleZoomOut, handleResetZoom, handleOverviewMap, handleCoordinates } from '../../logic/map.logic';
+import { handleZoomIn, handleZoomOut, handleResetZoom, handleOverviewMap, handleCoordinates, handleDisplayBuiltInFilters } from '../../logic/map.logic';
 import { PrimaryToolbarItem } from './map-toolbar.component';
-import { Map, ZoomOutMap, ZoomIn, LocationOn, ZoomInMap, ZoomOut } from '@mui/icons-material';
+import { Map, ZoomOutMap, ZoomIn, LocationOn, ZoomInMap, ZoomOut, FilterTiltShift } from '@mui/icons-material';
 
 
-export function buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates): PrimaryToolbarItem[] {
+export function buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates, setShowBuiltinAreaFilter): PrimaryToolbarItem[] {
 
     console.log('Building toolbar items with mapRef:', { mapRef });
 
@@ -52,6 +52,12 @@ export function buildToolbarItems(mapRef, setShowOverviewMap, setShowCoordinates
                     icon: <LocationOn />,
                     tooltip: 'Display coordinates',
                     onClick: () => handleCoordinates(setShowCoordinates),
+                },
+                {
+                    id: 'builtInAreaFilters',
+                    icon: <FilterTiltShift />,
+                    tooltip: 'Display Built-In Area Filters',
+                    onClick: () => handleDisplayBuiltInFilters(setShowBuiltinAreaFilter),
                 },
             ],
         },

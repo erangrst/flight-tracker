@@ -24,9 +24,7 @@ export function centerMap(longitude: number, latitude: number, zoom?: number) {
       essential: true,
     });
   } else {
-    window.dispatchEvent(
-      new CustomEvent('map:center', { detail: { longitude, latitude, zoom } })
-    );
+    window.dispatchEvent(new CustomEvent('map:center', { detail: { longitude, latitude, zoom } }));
   }
 }
 
@@ -50,4 +48,8 @@ export function handleOverviewMap(setShowOverviewMap: any) {
 
 export function handleCoordinates(setShowCoordinates: any) {
   setShowCoordinates((current: any) => !current);
+}
+
+export function handleDisplayBuiltInFilters(setDisplayBuiltInFilters: any) {
+  setDisplayBuiltInFilters((current: any) => !current);
 }
